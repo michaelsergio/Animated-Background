@@ -136,3 +136,6 @@ if __name__ == '__main__':
     xml_path = os.path.join(REDDIT_DIR, xml_name)
     xml_file = open(xml_path, 'w')
     make_xml(images).write(xml_file)
+
+    os.system('gsettings set org.gnome.desktop.background picture-uri file://%s'
+               % xml_path)
