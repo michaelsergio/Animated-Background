@@ -7,12 +7,17 @@ import urllib
 from urlparse import urlparse, urljoin
 from optparse import OptionParser
 from bs4 import BeautifulSoup
+from makeslideshow import make_xml
+
+VALID_EXTS = ['.jpg', '.png', '.gif']
+USER_AGENT = 'A /r/spaceporn scrapper (mikeserg@gmail.com)'
+REDDIT_DIR = os.path.expanduser('~/.redditbackgrounds')
 
 def download_images():
-    reddit_dir = os.path.expanduser('~/.redditbackgrounds')
+    images = []
 
-    if not os.path.exists(reddit_dir): 
-        os.makedirs(reddit_dir)
+    if not os.path.exists(REDDIT_DIR): 
+        os.makedirs(REDDIT_DIR)
 
     url = "http://www.reddit.com/r/spaceporn.json"
     try:
@@ -49,18 +54,22 @@ def download_images():
                 ext = os.path.splitext(pic_url)[1]
                 valid = ext and ext in VALID_EXTS
 
-            path = os.path.join(reddit_dir, title + ext)
+            path = os.path.join(REDDIT_DIR, title + ext)
             if not os.path.exists(path) and valid:
                 v_log("Creating '%s' from %s" % (title + ext, pic_url))
                 try:
                     urllib.urlretrieve(pic_url, path)
+                    images.append(path)
                 except IOError as ex:
                     v_log("Unable to read %s" % pic_url, failure=True)
                     v_log("Reason: {0}".format(ex), failure=True)
             else:
                 v_log("Ignoring %s" % pic_url, failure= not valid)
+                if valid:
+                  images.append(path)
     except IOError as ex:
         v_log('IO Error: {0}'.format(ex), failure=True)
+    return images
 
 def v_log(string, failure=False):
     if OPTIONS.failures:
@@ -114,13 +123,16 @@ if __name__ == '__main__':
                       help="log only failures")
     (OPTIONS, ARGS) = PARSER.parse_args()
 
-    VALID_EXTS = ['.jpg', '.png', '.gif']
-    USER_AGENT = 'A /r/spaceporn scrapper (mikeserg@gmail.com)'
-
     # Set my user agent to get paste urllib bans
     OPENER = MyOpener()
     urllib._urlopener = OPENER
     urllib2._urlopener = OPENER
-    # retrieve all images
-    download_images()
 
+
+    # retrieve all images
+    images = download_images()
+
+    xml_name = "slideshow.xml"
+    xml_path = os.path.join(REDDIT_DIR, xml_name)
+    xml_file = open(xml_path, 'w')
+    make_xml(images).write(xml_file)
