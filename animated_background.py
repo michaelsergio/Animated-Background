@@ -7,7 +7,7 @@ import urllib
 from urlparse import urlparse, urljoin
 from optparse import OptionParser
 from bs4 import BeautifulSoup
-from makeslideshow import make_xml
+from slideshow import make_xml
 
 VALID_EXTS = ['.jpg', '.png', '.gif']
 USER_AGENT = 'A /r/spaceporn scrapper (mikeserg@gmail.com)'
@@ -21,10 +21,6 @@ def download_images():
 
     url = "http://www.reddit.com/r/spaceporn.json"
     try:
-        #request = urllib2.Request(url)
-        #request.add_header('User-Agent', USER_AGENT)
-        #opener = urllib2.build_opener()
-        #contents = opener.open(request).read()
         contents = urllib.urlopen(url).read()
 
         listing = json.loads(contents)
@@ -130,9 +126,6 @@ if __name__ == '__main__':
     urllib._urlopener = OPENER
     urllib2._urlopener = OPENER
 
-    # in seconds
-
-
     # retrieve all images
     all_images = download_images()
 
@@ -141,5 +134,6 @@ if __name__ == '__main__':
     xml_file = open(xml_path, 'w')
     make_xml(all_images, int(OPTIONS.delay)).write(xml_file)
 
+    # make an OS call to run the gsettings command to set the background
     os.system('gsettings set org.gnome.desktop.background picture-uri file://%s'
                % xml_path)
