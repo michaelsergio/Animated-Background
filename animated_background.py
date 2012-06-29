@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from slideshow import make_xml
 
 VALID_EXTS = ['.jpg', '.png', '.gif']
-USER_AGENT = 'A /r/spaceporn scrapper (mikeserg@gmail.com)'
+USER_AGENT = 'A Reddit SFW-porn scrapper (https://github.com/michaelsergio/Animated-Background)'
 REDDIT_DIR = os.path.expanduser('~/.redditbackgrounds')
 
 def download_images():
