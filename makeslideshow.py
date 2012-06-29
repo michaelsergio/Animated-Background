@@ -4,7 +4,7 @@ import os.path
 import sys
 from xml.etree.cElementTree import Element, ElementTree, SubElement
 
-def make_xml(files):
+def make_xml(files, delay=5):
     background = Element('background')
 
     starttime = SubElement(background, 'starttime')
@@ -21,7 +21,7 @@ def make_xml(files):
         static = SubElement(background, 'static')
         duration = SubElement(static, 'duration')
         filename = SubElement(static, 'file')
-        duration.text = '10.0'
+        duration.text = str(delay)
         filename.text = img
         
         files = files[1:]
@@ -42,7 +42,7 @@ def make_xml(files):
     return doc
 
 if __name__ == '__main__':
-    testFiles = [
+    test_files = [
     'Arctic Sea Ice Maximum By NASA Goddard Photo and Video [1280 x 720].jpg',
     'Aurora Over Raufarhöfn [798 x 1200].jpg',
     'Biri Island, Samar Philippines [950 x 632].jpg',
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     ]
 
     SRC_DIR = '/home/sergio/.redditbackgrounds'
-    imageFiles = [os.path.join(SRC_DIR, imageFile) for imageFile in testFiles]
+    image_files = [os.path.join(SRC_DIR, image_file) for image_file in test_files]
 
-    make_xml(imageFiles).write(sys.stdout, encoding="utf-8")
+    make_xml(image_files).write(sys.stdout, encoding="utf-8")
 

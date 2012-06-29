@@ -66,7 +66,7 @@ def download_images():
             else:
                 v_log("Ignoring %s" % pic_url, failure= not valid)
                 if valid:
-                  images.append(path)
+                    images.append(path)
     except IOError as ex:
         v_log('IO Error: {0}'.format(ex), failure=True)
     return images
@@ -121,6 +121,8 @@ if __name__ == '__main__':
                       help="explain what is being done")
     PARSER.add_option("-f", "--failures", action="store_true",
                       help="log only failures")
+    PARSER.add_option("-d", "--delay", default="60",
+                      help="sets the delay inbetween the slideshow (in seconds)")
     (OPTIONS, ARGS) = PARSER.parse_args()
 
     # Set my user agent to get paste urllib bans
@@ -128,14 +130,16 @@ if __name__ == '__main__':
     urllib._urlopener = OPENER
     urllib2._urlopener = OPENER
 
+    # in seconds
+
 
     # retrieve all images
-    images = download_images()
+    all_images = download_images()
 
     xml_name = "slideshow.xml"
     xml_path = os.path.join(REDDIT_DIR, xml_name)
     xml_file = open(xml_path, 'w')
-    make_xml(images).write(xml_file)
+    make_xml(all_images, int(OPTIONS.delay)).write(xml_file)
 
     os.system('gsettings set org.gnome.desktop.background picture-uri file://%s'
                % xml_path)
