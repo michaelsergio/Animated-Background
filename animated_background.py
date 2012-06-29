@@ -9,17 +9,37 @@ from optparse import OptionParser
 from bs4 import BeautifulSoup
 from slideshow import make_xml
 
-VALID_EXTS = ['.jpg', '.png', '.gif']
-USER_AGENT = 'A Reddit SFW-porn scrapper (https://github.com/michaelsergio/Animated-Background)'
 REDDIT_DIR = os.path.expanduser('~/.redditbackgrounds')
+SUBREDDIT_URL = "http://www.reddit.com/r/"
+USER_AGENT = 'A Reddit SFW-porn scrapper (https://github.com/michaelsergio/Animated-Background)'
+VALID_EXTS = ['.jpg', '.png', '.gif']
 
-def download_images():
+SFW_PORN_NETWORK_COMPLEX = {
+  "elemental": "earthporn+waterporn+skyporn+fireporn+destructionporn+spaceporn",
+  "synthetic": "CityPorn+VillagePorn+AbandonedPorn+InfrastructurePorn+MachinePorn+MilitaryPorn" ,
+  "organic": "AnimalPorn+BotanicalPorn+HumanPorn+AdrenalinePorn",
+  "aesthetic": "DesignPorn+AlbumArtPorn+MoviePosterPorn+AdPorn+GeekPorn+RoomPorn", 
+  "scholastic": "HistoryPorn+MapPorn+BookPorn+NewsPorn+QuotesPorn" 
+}
+
+SFW_PORN_NETWORK = [
+'earth', 'water', 'sky', 'space', 'fire', 'destruction',
+'city', 'village', 'abandoned', 'infrastructure', 'machine', 'military', 
+'cemetery', 'architecture', 'car', 'gun',
+'animal', 'botanical', 'human', 'adrenaline', 'climbing', 'culinary', 
+'dessert', 'agriculture',
+'design', 'albumart', 'movieposter', 'ad', 'geek', 'room', 'instrument', 
+'macro', 'art', 'fractal', 'exposure', 
+'history', 'map', 'book', 'news', 'quotes'
+]
+
+
+def download_images(url):
     images = []
 
     if not os.path.exists(REDDIT_DIR): 
         os.makedirs(REDDIT_DIR)
 
-    url = "http://www.reddit.com/r/spaceporn.json"
     try:
         contents = urllib.urlopen(url).read()
 
@@ -94,7 +114,6 @@ def get_largest_image_from_html(url):
             # add net_loc: http://example.com/hello/world
             src_parse = urlparse(src)
             if src_parse.netloc == '':
-                org_parse = urlparse(url)
                 img_url = urljoin(url, src_parse.netloc)
             else:
                 img_url = src
@@ -110,6 +129,30 @@ def images_with_width_and_height(tag):
            tag.has_key('width') and \
            tag.has_key('height') and \
            tag.has_key('src')
+
+def parse_networks(networks_given):
+    urls = []
+    reddit_networks = []
+    for network in networks_given.split('+'):
+        if network.lower() in SFW_PORN_NETWORK_COMPLEX:
+            reddit_networks.append(networks_given[network])
+        elif network in SFW_PORN_NETWORK:
+            reddit_networks.append("%sporn" % network)
+        elif network.startswith('http'):
+            urls.append(network)
+        else:
+            # New SFWPorn name?
+            # Let's try it out
+            reddit_networks.append("%sporn" % network)
+    urls.append("%s%s.json" % (SUBREDDIT_URL, '+'.join(reddit_networks)))
+    return urls
+
+  
+def print_network_list():
+    all_networks = SFW_PORN_NETWORK_COMPLEX.keys() + SFW_PORN_NETWORK
+    print '\n'.join(sorted(all_networks))
+
+
 if __name__ == '__main__':
     # Check for command line flags
     PARSER = OptionParser()
@@ -118,7 +161,12 @@ if __name__ == '__main__':
     PARSER.add_option("-f", "--failures", action="store_true",
                       help="log only failures")
     PARSER.add_option("-d", "--delay", default="60",
-                      help="sets the delay inbetween the slideshow (in seconds)")
+                      help="sets the delay in between the slideshow (in seconds)")
+    PARSER.add_option("-n", "--networks", default="space",
+                      help="The networks to use. Use + for multiple (space+earth)")
+    PARSER.add_option("-l", "--list", action="store_true",
+                      help="Lists all know networks")
+
     (OPTIONS, ARGS) = PARSER.parse_args()
 
     # Set my user agent to get paste urllib bans
@@ -126,8 +174,15 @@ if __name__ == '__main__':
     urllib._urlopener = OPENER
     urllib2._urlopener = OPENER
 
+    if OPTIONS.list:
+        print_network_list()
+        exit()
+
     # retrieve all images
-    all_images = download_images()
+    urls_to_use = parse_networks(OPTIONS.networks)
+    all_images = []
+    for url in urls_to_use:
+        all_images += download_images(url)
 
     xml_name = "slideshow.xml"
     xml_path = os.path.join(REDDIT_DIR, xml_name)
