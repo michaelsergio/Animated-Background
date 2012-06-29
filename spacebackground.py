@@ -4,17 +4,9 @@ import urllib2
 import os
 import os.path
 import urllib
+from urlparse import urlparse, urljoin
 from optparse import OptionParser
 from bs4 import BeautifulSoup
-
-PARSER = OptionParser()
-PARSER.add_option("-v", "--verbose", action="store_true",
-                  help="explain what is being done")
-PARSER.add_option("-f", "--failures", action="store_true",
-                  help="log only failures")
-(OPTIONS, ARGS) = PARSER.parse_args()
-
-VALID_EXTS = ['.jpg', '.png', '.gif']
 
 def download_images():
     reddit_dir = os.path.expanduser('~/.redditbackgrounds')
@@ -24,10 +16,11 @@ def download_images():
 
     url = "http://www.reddit.com/r/spaceporn.json"
     try:
-        request = urllib2.Request(url)
-        request.add_header('User-Agent', 'a spaceporn scrapper')
-        opener = urllib2.build_opener()
-        contents = opener.open(request).read()
+        #request = urllib2.Request(url)
+        #request.add_header('User-Agent', USER_AGENT)
+        #opener = urllib2.build_opener()
+        #contents = opener.open(request).read()
+        contents = urllib.urlopen(url).read()
 
         listing = json.loads(contents)
 
@@ -60,7 +53,6 @@ def download_images():
             if not os.path.exists(path) and valid:
                 v_log("Creating '%s' from %s" % (title + ext, pic_url))
                 try:
-                    opener = MyOpener()
                     urllib.urlretrieve(pic_url, path)
                 except IOError as ex:
                     v_log("Unable to read %s" % pic_url, failure=True)
@@ -79,7 +71,7 @@ def v_log(string, failure=False):
             print(string)
 
 class MyOpener(urllib.FancyURLopener):
-    version = 'space background scraper'
+    version = USER_AGENT
 
 def get_largest_image_from_html(url):
     # assuming html
@@ -92,7 +84,17 @@ def get_largest_image_from_html(url):
         imgs = [int(t.attrs['width']) * int(t.attrs['height']) for t in tags]
         if imgs:
             idx = imgs.index(max(imgs))
-            return tags[idx]['src']
+            src = tags[idx]['src']
+            # if image comes back like /hello/world
+            # add net_loc: http://example.com/hello/world
+            src_parse = urlparse(src)
+            if src_parse.netloc == '':
+                org_parse = urlparse(url)
+                img_url = urljoin(url, src_parse.netloc)
+            else:
+                img_url = src
+
+            return img_url
         else: return None
     except IOError as ex:
         v_log("Unable to read %s" % url, failure=True)
@@ -104,5 +106,21 @@ def images_with_width_and_height(tag):
            tag.has_key('height') and \
            tag.has_key('src')
 if __name__ == '__main__':
+    # Check for command line flags
+    PARSER = OptionParser()
+    PARSER.add_option("-v", "--verbose", action="store_true",
+                      help="explain what is being done")
+    PARSER.add_option("-f", "--failures", action="store_true",
+                      help="log only failures")
+    (OPTIONS, ARGS) = PARSER.parse_args()
+
+    VALID_EXTS = ['.jpg', '.png', '.gif']
+    USER_AGENT = 'A /r/spaceporn scrapper (mikeserg@gmail.com)'
+
+    # Set my user agent to get paste urllib bans
+    OPENER = MyOpener()
+    urllib._urlopener = OPENER
+    urllib2._urlopener = OPENER
+    # retrieve all images
     download_images()
 
