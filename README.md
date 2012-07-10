@@ -2,7 +2,7 @@ Instructions
 =================
 Run the animated_background.py script.
 
-It will scrape Reddit's /r/spaceporn and download the images into your home directory under a new folder called .redditbackgrounds.
+It will scrape Reddit's sfw-porn sites (/r/spaceporn by default) and download the images into your home directory under a new folder called .redditbackgrounds.
 
 It will then create an xml file in that directory containing the slideshow and automatically set it.
 
