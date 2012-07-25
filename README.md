@@ -8,6 +8,7 @@ It will then create an xml file in that directory containing the slideshow and a
 
 This has not been tested on anything except:
 * Ubuntu 12.04
+* Arch Linux running Gnome Shell
 
 This script requires BeautifulSoup4 which can be installed with
 
